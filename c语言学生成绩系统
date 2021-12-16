@@ -1,0 +1,557 @@
+#include<stdio.h>
+#include<string.h>
+#include<stdlib.h>
+#include<math.h>
+#define Nclass 6
+#define Nname 16
+#define Ninitial 6
+typedef struct student
+{
+	int id;
+	char name[Nname];
+	float score[Nclass];
+	float sum;
+	float aver;
+	int rank;
+	struct student *next;	
+}STUDENT;
+
+STUDENT* initial(void);
+void InputStudent(STUDENT *head,char (*class)[12]);
+void RankScore(STUDENT *head,int order);
+void RankId(STUDENT *head);
+void RankName(STUDENT *head);
+void ClassSum(STUDENT *head,float *sum,float *aver,int *count);
+void SearchName(STUDENT* head,char *findname,char(*class)[12]);
+void SearchId(STUDENT* head,int findid,char(*class)[12]);
+void Statistics (STUDENT *head,char(*class)[12]);
+void Print(STUDENT* head,char (*class)[12],float *classsum,float *classaver);
+void PrintClass(STUDENT *head,char(*class)[12],float *classsum,float *classaver,int *count);
+void PrintStudent(STUDENT *head);
+int main()
+{
+	STUDENT *head;
+	int choice=-1;
+	char class[Nclass][12]={"Chinese","Math","English","Physics","Chemist","Biology"};
+	float classsum[Nclass]={0},classaver[Nclass]={0};
+	int count[Nclass]={0};
+	int findid=0;
+	char findname[Nname]={'\0'};
+	head=initial();
+	do
+	{
+		printf("1.Input record\n");
+		printf("2.Calculate total and average score of every course\n");
+		printf("3.Calculate total and average score of every student\n");
+		printf("4.Sort in descending order by total score of every student\n");
+		printf("5.Sort in ascending order by total score of every student\n");
+		printf("6.Sort in ascending order by number\n");
+		printf("7.Sort in dictionary order by name\n");
+		printf("8.Search by number\n");
+		printf("9.Search by name\n");
+		printf("10.Statistic analysis for every course\n");
+		printf("11.List record\n");
+		printf("0.Exit\n");
+		printf("Please enter your choice:\n");
+		if(scanf("%d",&choice)==0)
+		{
+			while(getchar()!='\n');
+			printf("ERROR CHOICE!\n");
+			continue;
+		}
+		switch(choice)
+		{
+			case 1:
+				InputStudent(head,class);
+				break;
+			case 2:
+				ClassSum(head,classsum,classaver,count);
+				PrintClass(head,class,classsum,classaver,count);
+				break;
+			case 3:
+				PrintStudent(head);
+				break;
+			case 4:
+				RankScore(head,1);
+				ClassSum(head,classsum,classaver,count);
+				Print(head,class,classsum,classaver);				
+				break;
+			case 5:
+				RankScore(head,2);
+				ClassSum(head,classsum,classaver,count);
+				Print(head,class,classsum,classaver);
+				break;
+			case 6:
+				RankId(head);
+				ClassSum(head,classsum,classaver,count);
+				Print(head,class,classsum,classaver);
+				break;
+			case 7:
+				RankName(head);
+				ClassSum(head,classsum,classaver,count);
+				Print(head,class,classsum,classaver);
+				break;
+			case 8:
+				RankScore(head,1);
+				printf("WHAT ID DO YOU WANT TO SEARCH?\n");
+				scanf("%d",&findid);
+				SearchId(head,findid,class);
+				break;
+			case 9:
+				RankScore(head,1);
+				printf("WHAT NAME DO YOU WANT TO SEARCH?\n");
+				getchar();
+				gets(findname);
+				SearchName(head,findname,class);
+				break;
+			case 10:
+				Statistics(head,class);
+				break;
+			case 11:
+				ClassSum(head,classsum,classaver,count);
+				Print(head,class,classsum,classaver);
+				break;
+		}
+	}while(choice);
+}
+
+STUDENT* initial(void)
+{
+	int id[Ninitial]={2021003,2021009,2021105,2021015,2021024,2021099};
+	char name[Ninitial][Nname]={"张三","李四","王五","赵六","周七","吴八"};
+	float score[Ninitial][Nclass]={{89,94,91,98,99,93},
+								 {78,99,99,99,100,100},
+								 {88,75,84,83,80,98},
+								 {78,65,67,75,84,77},
+								 {75,94,86,97,92,87},
+								 {100,100,100,100,100,100}};
+	float sum[Ninitial]={0};
+	float aver[Ninitial]={0};
+	int i,j;
+	for(i=0;i<Ninitial;i++)
+	{
+		for(j=0;j<Nclass;j++)
+		{
+			sum[i]+=score[i][j];
+		}
+		aver[i]=sum[i]/Nclass;
+	}
+	STUDENT *head=NULL,*pr=NULL,*p=NULL;
+	for(i=0;i<Ninitial;i++)
+	{
+		if(head==NULL)
+		{
+			p=(STUDENT*)malloc(sizeof(STUDENT));
+			if(p==NULL)
+			{
+				printf("NOT ENOUGH MEMORY!\n");
+				exit(0);
+			}
+			head=p;
+			pr=p;
+			p->id=id[i],strcpy(p->name,name[i]),p->sum=sum[i],p->aver=aver[i];
+			for(j=0;j<Nclass;j++)
+			{
+				(p->score)[j]=score[i][j];
+			}
+			p->next=NULL;
+		}
+		else
+		{
+			p=(STUDENT*)malloc(sizeof(STUDENT));
+			if(p==NULL)
+			{
+				printf("NOT ENOUGH MEMORY!\n");
+				exit(0);
+			}
+			pr->next=p;
+			pr=p;
+			p->id=id[i],strcpy(p->name,name[i]),p->sum=sum[i],p->aver=aver[i];
+			for(j=0;j<Nclass;j++)
+			{
+				(p->score)[j]=score[i][j];
+			}
+			p->next=NULL;						
+		}
+	}
+	return head;
+}
+
+void InputStudent(STUDENT *head,char (*class)[12])
+{
+	int i,j,n;
+	STUDENT *p=NULL,*pr=head;
+	printf("Please Input The Number OF Students:");
+	scanf("%d",&n);
+	while(pr->next!=NULL)
+	{
+		pr=pr->next;
+	}
+	for(i=1;i<=n;i++)
+	{
+		p=(STUDENT*)malloc(sizeof(STUDENT));
+		if(p==NULL)
+		{
+			printf("NOT ENOUGH MEMORY!\n");
+			exit(0);
+		}
+		pr->next=p;
+		printf("INPUT STUDENT ID\n");
+		scanf("%d",&p->id);
+		getchar();
+		printf("INPUT STUDENT NAME\n");
+		gets(p->name);
+		printf("INPUT COURSE GRADES (If he does not take the exam, enter - 1)\n");
+		p->sum=0;
+		for(j=0;j<6;j++)
+		{
+			do
+			{
+				printf("INPUT %s grade:",class[j]);
+				scanf("%f",&p->score[j]);
+				if(!(fabs(p->score[j]+1)<1e-6||p->score[j]<=100&&p->score[j]>=0))		printf("YOU INPUT IS ERROR!\n");
+			}while(!(fabs(p->score[j]+1)<1e-6||p->score[j]<=100&&p->score[j]>=0));
+			if(p->score[j]==-1)		p->sum+=0;
+			else p->sum+=p->score[j];
+		}
+		p->aver=p->sum/Nclass;
+		p->next=NULL;
+		pr=p;
+	}
+}
+
+void ClassSum(STUDENT *head,float *sum,float *aver,int* count)
+{
+	int i;
+	STUDENT *pr=head;
+	for(i=0;i<Nclass;i++)
+	{
+		sum[i]=0,aver[i]=0;count[i]=0;
+	}
+	while(pr!=NULL)
+	{
+		for(i=0;i<Nclass;i++)
+		{
+			if(fabs((pr->score)[i]+1)<1e-6)
+			{
+				continue;
+			} 
+			sum[i]+=(pr->score)[i];
+			count[i]++;
+		}
+		pr=pr->next;
+	}
+	for(i=0;i<Nclass;i++)
+	{
+		aver[i]=sum[i]/count[i];
+	}
+}
+
+void Print(STUDENT* head,char (*class)[12],float *classsum,float *classaver)
+{
+	int i,number=0;
+	STUDENT *pr=head;
+	for(i=1;i<=90;i++)		printf("*");
+	printf("\n");
+	printf("\t  ID\tNAME");
+	for(i=0;i<Nclass;i++)
+	{
+		printf("\t%s",class[i]);
+	}
+	printf("\tSUM\tAVERAGE\n");
+	while(pr!=NULL)
+	{
+		printf("%d",++number);
+		printf("\t%d\t%s",pr->id,pr->name);
+		for(i=0;i<Nclass;i++)
+		{
+			if(fabs(pr->score[i]+1)<1e-6)	printf("\tabsence");
+			else printf("\t%.1f",(pr->score)[i]);
+		}
+		printf("\t%.1f\t%.1f\n",pr->sum,pr->aver);
+		pr=pr->next;
+	}
+	printf("TOTAL SCORE\t");
+	for(i=0;i<Nclass;i++) printf("\t%.1f",classsum[i]);
+	printf("\nAVERAGE SCORE\t");
+	for(i=0;i<Nclass;i++) printf("\t%.1f",classaver[i]);
+	printf("\n");
+	for(i=1;i<=90;i++)		printf("*");
+	printf("\n");
+}
+
+void PrintClass(STUDENT *head,char(*class)[12],float *classsum,float *classaver,int *count)
+{
+	int i;
+	for(i=1;i<=60;i++)		printf("*");
+	printf("\nCOURSE");
+	for(i=0;i<Nclass;i++)
+	{
+		printf("\t%s",class[i]);
+	}
+	printf("\nSUM");
+	for(i=0;i<Nclass;i++)
+	{
+		printf("\t%.1f",classsum[i]);
+	}
+	printf("\nAVERAGE");
+	for(i=0;i<Nclass;i++)
+	{
+		printf("\t%.1f",classaver[i]);
+	}
+	printf("\nPROPlE");
+	for(i=0;i<Nclass;i++)
+	{
+		printf("\t%d",count[i]);
+	}
+	printf("\n");
+	for(i=1;i<=60;i++)		printf("*");
+	printf("\n");
+}
+
+void PrintStudent(STUDENT *head)
+{
+	int i;
+	STUDENT *pr=head;
+	for(i=1;i<=35;i++)		printf("*");
+	printf("\n");
+	printf("ID\tNAME\tSUM\tAVERAGE\n");
+	while(pr!=NULL)
+	{
+		printf("%d\t%s\t%.1f\t%.1f\n",pr->id,pr->name,pr->sum,pr->aver);
+		pr=pr->next;
+	}
+	for(i=1;i<=35;i++)		printf("*");
+	printf("\n");
+}
+
+void RankScore(STUDENT *head,int order)
+{
+	int i=1;
+	STUDENT temp,*host=head,*guest=NULL,*mark=NULL;
+	while(host->next!=NULL)
+	{
+		mark=host;
+		guest=host->next;
+		while(guest!=NULL)
+		{
+			if(order==1)
+			{
+				if(guest->sum>mark->sum)
+				{
+					mark=guest;
+				}
+			}
+			if(order==2)
+			{
+				if(guest->sum<mark->sum)
+				{
+					mark=guest;
+				}
+			}
+			guest=guest->next;
+		}
+		temp=*host;
+		*host=*mark;
+		*mark=temp;
+		mark->next=host->next;
+		host->next=temp.next;
+		host=host->next;
+	}
+	if(order==1)
+	{
+		host=head;
+		while(host!=NULL)
+		{
+			host->rank=i++;
+			host=host->next;
+		}
+	}
+	return;
+}
+
+void RankId(STUDENT *head)
+{
+	STUDENT *host=head,*guest=NULL,*min=NULL,temp;
+	while(host->next!=NULL)
+	{
+		min=host;
+		guest=host->next;
+		while(guest!=NULL)
+		{
+			if(guest->id<min->id)
+			{
+				min=guest;
+			}
+			guest=guest->next;
+		}
+		temp=*host;
+		*host=*min;
+		*min=temp;
+		min->next=host->next;
+		host->next=temp.next;
+		host=host->next;
+	}
+	return;
+}
+
+void RankName(STUDENT *head)
+{
+	STUDENT *host=head,*guest=NULL,*min=NULL,temp;
+	while(host->next!=NULL)
+	{
+		min=host;
+		guest=host->next;
+		while(guest!=NULL)
+		{
+			if(strcmp(guest->name,min->name)<0)
+			{
+				min=guest;
+			}
+			guest=guest->next;
+		}
+		temp=*host;
+		*host=*min;
+		*min=temp;
+		min->next=host->next;
+		host->next=temp.next;
+		host=host->next;
+	}
+	return;
+}
+
+void SearchId(STUDENT* head,int findid,char (*class)[12])
+{
+	STUDENT *host=head;
+	int flag=0,i;
+	while(host!=NULL)
+	{
+		if(findid==host->id)
+		{
+			flag=1;
+			break;
+		}
+		host=host->next;
+	}
+	if(flag)
+	{
+	for(i=1;i<=90;i++)		printf("*");
+	printf("\n");
+	printf("RANK\t  ID\tNAME");
+	for(i=0;i<Nclass;i++)
+	{
+		printf("\t%s",class[i]);
+	}
+	printf("\tSUM\tAVERAGE\n");
+	printf("%d\t%d\t%s",host->rank,host->id,host->name);
+	for(i=0;i<Nclass;i++)
+	{
+		if(fabs(host->score[i]+1)<1e-6)		printf("\tabsence");
+		else  printf("\t%.1f",(host->score)[i]);
+	}
+	printf("\t%.1f\t%.1f\n",host->sum,host->aver);
+	for(i=1;i<=90;i++)		printf("*");
+	printf("\n");
+	}
+	else
+	{
+		printf("NO FOUND!\n");
+	}
+}
+
+void SearchName(STUDENT* head,char *findname,char(*class)[12])
+{
+		STUDENT *host=head;
+	int flag=0,i;
+	while(host!=NULL)
+	{
+		if(strcmp(findname,host->name)==0)
+		{
+			flag=1;
+			break;
+		}
+		host=host->next;
+	}
+	if(flag)
+	{
+	for(i=1;i<=90;i++)		printf("*");
+	printf("\n");
+	printf("RANK\t  ID\tNAME");
+	for(i=0;i<Nclass;i++)
+	{
+		printf("\t%s",class[i]);
+	}
+	printf("\tSUM\tAVERAGE\n");
+	printf("%d\t%d\t%s",host->rank,host->id,host->name);
+	for(i=0;i<Nclass;i++)
+	{
+		if(fabs(host->score[i]+1)<1e-6)		printf("\tabsence");
+		else printf("\t%.1f",(host->score)[i]);
+	}
+	printf("\t%.1f\t%.1f\n",host->sum,host->aver);
+	for(i=1;i<=90;i++)		printf("*");
+	printf("\n");
+	}
+	else
+	{
+		printf("NO FOUND!\n");
+	}
+}
+
+void Statistics (STUDENT *head,char (*class)[12])
+{
+	int count=0,sum[5][Nclass]={0},i,j;
+	float rate[5][Nclass];
+	STUDENT *host=head;
+	while(host!=NULL)
+	{
+		for(i=0;i<Nclass;i++)
+		{
+			if(host->score[i]<60)	sum[0][i]++;
+			else if(host->score[i]>=60&&host->score[i]<70)	sum[1][i]++;
+			else if(host->score[i]>=70&&host->score[i]<80)	sum[2][i]++;
+			else if(host->score[i]>=80&&host->score[i]<90)	sum[3][i]++;
+			else if(host->score[i]>=90&&host->score[i]<=100)	sum[4][i]++;
+		}
+		count++;
+		host=host->next;
+	}
+	for(i=0;i<5;i++)
+	{
+		for(j=0;j<Nclass;j++)
+		{
+			rate[i][j]=1.0*sum[i][j]/count;
+		}
+	}
+	for(i=1;i<=70;i++)		printf("*");
+	printf("\nCLASS");
+	for(i=0;i<Nclass;i++)
+	{
+		printf("\t%s",class[i]);
+	}
+	for(i=0;i<5;i++)
+	{
+		if(i==0)
+		{
+			printf("\n0 ———————— 60（include absence）");
+		}
+		else
+		{
+			printf("\n%d ———————— %d",50+10*i,60+10*i);
+		}
+		printf("\nSUM");
+		for(j=0;j<Nclass;j++)
+		{
+			printf("\t%d",sum[i][j]);
+		}
+		printf("\nRATE");
+		for(j=0;j<Nclass;j++)
+		{
+			printf("\t%.1f%%",rate[i][j]*100);
+		}
+	}
+	printf("\n");
+	for(i=1;i<=70;i++)		printf("*");
+	printf("\n");
+	return;
+}
